@@ -2,6 +2,7 @@ from datetime import date, timedelta
 
 from src.event_handler import EventHandler
 from src.library import Library
+from src.menu import get_title
 from src.reader import Reader
 
 
@@ -12,17 +13,29 @@ class ReaderManager:
         self.library = library
 
     def borrow_book(self):
-        title = input("Title: ")
+        title = get_title()
         for book in self.library.books:
-            if (book.title == title and book.reserved is False and book.available is True) \
-                        or (book.title in self.reader.reserved_books and book.available is True):
-                book.available = False
-                self.reader.books.append(book)
-                self.event_handler.update_history(self.reader, book, date.today(), date.today() + timedelta(days=14))
-                return book
+            if book in self.reader.reserved_books:
+                return self._borrow_reserved_book(book)
+            elif book.title == title and book.reserved is False and book.available is True:
+                return self._borrow_available_book(book)
+
+    def _borrow_available_book(self, book):
+        book.available = False
+        self.reader.books.append(book)
+        self.event_handler.update_history(self.reader, book, date.today(), date.today() + timedelta(days=14))
+        return book
+
+    def _borrow_reserved_book(self, book):
+        book.available = False
+        book.reserved = False
+        self.reader.reserved_books.remove(book)
+        self.reader.books.append(book)
+        self.event_handler.update_history(self.reader, book, date.today(), date.today() + timedelta(days=14))
+        return book
 
     def reserve_book(self):
-        title = input("Title: ")
+        title = get_title()
         for book in self.library.books:
             if book.title == title:
                 book.reserved = True
@@ -30,8 +43,16 @@ class ReaderManager:
                 book.add_subscriber(self.reader)
                 return book
 
+    def resign_from_reservation(self):
+        title = get_title()
+        for book in self.reader.reserved_books:
+            if book.title == title:
+                self.reader.reserved_books.remove(book)
+                book.reserved = False
+
+
     def return_book(self):
-        title = input("Title: ")
+        title = get_title()
         for book in self.reader.books:
             if book.title == title:
                 self.reader.books.remove(book)
