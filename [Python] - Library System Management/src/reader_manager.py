@@ -40,7 +40,6 @@ class ReaderManager:
             if book.title == title:
                 book.reserved = True
                 self.reader.reserved_books.append(book)
-                book.add_subscriber(self.reader)
                 return book
 
     def resign_from_reservation(self):
@@ -49,7 +48,6 @@ class ReaderManager:
             if book.title == title:
                 self.reader.reserved_books.remove(book)
                 book.reserved = False
-
 
     def return_book(self):
         title = get_title()
